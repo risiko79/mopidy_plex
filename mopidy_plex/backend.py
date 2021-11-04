@@ -9,6 +9,7 @@ from mopidy import backend, httpclient
 from mopidy.models import  Artist, Album, Track
 
 from plexapi.server import PlexServer
+from plexapi.myplex import MyPlexAccount
 
 import mopidy_plex
 from .library import PlexLibraryProvider
@@ -39,13 +40,34 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
         self.playlists = PlexPlaylistsProvider(backend=self)
 
         self.uri_schemes = ['plex', ]
-
+        
         self.session = get_requests_session(
                   proxy_config=config['proxy'],
                   user_agent='%s/%s' % (
                       mopidy_plex.Extension.dist_name,
                       mopidy_plex.__version__))
-        self.plexsrv = PlexServer(self.config['server'], session=self.session, token=self.config['token']) 
+
+        token=self.config['token']
+        if token is None:
+            account = MyPlexAccount(
+                username=self.config['username'],
+                password=self.config['password'],
+                session=self.session)
+            token = account.authenticationToken
+        else:
+            account = MyPlexAccount(
+                token=token,
+                session = self.session
+            )
+
+        self.plexsrv = None
+        for dev in account.devices():
+            if dev.name.lower() == self.config['server'].lower():
+                self.plexsrv = dev.connect()
+                break        
+        
+        if self.plexsrv is None:
+            self.plexsrv = PlexServer(self.config['server'], session=self.session, token=token) 
 
 
     def plex_uri(self, uri_path:str, prefix='plex'):

@@ -22,7 +22,9 @@ class Extension(ext.Extension):
     def get_config_schema(self):
         schema = super(Extension, self).get_config_schema()
         schema['server'] = config.String()
-        schema['token'] = config.Secret()
+        schema['token'] = config.Secret(optional=True)
+        schema['username'] = config.String(optional=True)
+        schema['password'] = config.Secret(optional=True)
         return schema
 
     def setup(self, registry):
