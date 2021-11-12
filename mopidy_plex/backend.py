@@ -7,15 +7,16 @@ import pykka
 
 from mopidy import backend, httpclient
 from mopidy.models import  Artist, Album, Track
+from requests.sessions import session
 
-from plexapi.server import PlexServer
-from plexapi.myplex import MyPlexAccount
+
 
 import mopidy_plex
 from .library import PlexLibraryProvider
 from .playback import PlexPlaybackProvider
 from .playlists import PlexPlaylistsProvider
 from .cache import *
+from .helper import MopidyPlexHelper
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,6 @@ def get_requests_session(proxy_config, user_agent):
     session = requests.Session()
     session.proxies.update({'http': proxy, 'https': proxy})
     session.headers.update({'user-agent': full_user_agent})
-
     return session
 
 
@@ -47,27 +47,8 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
                       mopidy_plex.Extension.dist_name,
                       mopidy_plex.__version__))
 
-        token=self.config['token']
-        if token is None:
-            account = MyPlexAccount(
-                username=self.config['username'],
-                password=self.config['password'],
-                session=self.session)
-            token = account.authenticationToken
-        else:
-            account = MyPlexAccount(
-                token=token,
-                session = self.session
-            )
-
-        self.plexsrv = None
-        for dev in account.devices():
-            if dev.name.lower() == self.config['server'].lower():
-                self.plexsrv = dev.connect()
-                break        
-        
-        if self.plexsrv is None:
-            self.plexsrv = PlexServer(self.config['server'], session=self.session, token=token) 
+        h = MopidyPlexHelper.create(self.config, self.session)
+        self.plexsrv = h.server
 
 
     def plex_uri(self, uri_path:str, prefix='plex'):
