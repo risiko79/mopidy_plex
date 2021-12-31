@@ -1,32 +1,28 @@
 # -*- encoding: utf-8 -*-
-from __future__ import unicode_literals
-
-import re
-
 from setuptools import find_packages, setup
 
-
-def get_version(filename):
-    with open(filename) as fh:
-        metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", fh.read()))
-        return metadata['version']
+__version__ = "0.2.0"
 
 setup(
     name='Mopidy-Plex',
-    version=get_version('mopidy_plex/__init__.py'),
-    url='https://github.com/havardgulldahl/mopidy-plex',
+    version=__version__,
+    url='https://github.com/risiko79/mopidy_plex',
+    project_urls={
+        "Bug Tracker": "https://github.com/risiko79/mopidy_plex/issues",
+    },
     license='Apache License, Version 2.0',
-    author='Håvard Gulldahl',
-    author_email='havard@gulldahl.no',
-    description='Mopidy extension for playing audio from a Plex server',
+    author='Risiko79',
+    author_email='tante_buchner@hotmail.com',
+    description='Mopidy extension for playing audio from a Plex server as make mopity to a plex client',
     long_description=open('README.rst').read(),
     packages=find_packages(exclude=['tests', 'tests.*']),
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-        'setuptools',
-        'Mopidy >= 1.0',
-        'Pykka >= 1.1',
+        'setuptools>=42',
+        'wheel',
+        'Mopidy>=3',
+        'PlexAPI>=4.7',
     ],
     entry_points={
         'mopidy.ext': [
@@ -38,7 +34,8 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Topic :: Multimedia :: Sound/Audio :: Players',
     ],
+    python_requires=">=3.9",
 )

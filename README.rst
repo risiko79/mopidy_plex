@@ -10,15 +10,7 @@ Mopidy-Plex
     :target: https://pypi.python.org/pypi/Mopidy-Plex/
     :alt: Number of PyPI downloads
 
-.. image:: https://img.shields.io/travis/havardgulldahl/mopidy_plex/master.svg?style=flat
-    :target: https://travis-ci.org/havardgulldahl/mopidy_plex
-    :alt: Travis CI build status
-
-.. image:: https://img.shields.io/coveralls/havardgulldahl/mopidy_plex/master.svg?style=flat
-   :target: https://coveralls.io/r/havardgulldahl/mopidy_plex
-   :alt: Test coverage
-
-Mopidy extension for playing audio from a Plex server
+Mopidy extension for playing audio from a Plex server and make mopidy to a plex client
 
 
 Installation
@@ -37,16 +29,6 @@ And you need the `python-plexapi` module as well::
     pip install plexapi
 
 
-Extra setup hassle
--------------------
-
-**Update 2016-04-14** 
-
-Please pull  `python-plexapi`  directly from upstream at https://github.com/mjs7231/python-plexapi, which has proper Plex Audio support since https://github.com/mjs7231/python-plexapi/commit/443d1e76d8b7bc6e5181bb9791fb56b7462055e8 / March 15th.
-The upcoming 2.0 release of `python-plexapi` will contain this, so get that from PyPi when it is released there.
-
-
-
 Configuration
 =============
 
@@ -56,25 +38,31 @@ Mopidy-Plex to your Mopidy configuration file::
     [plex]
     enabled = true
     server = Servername
+    token = plex token
     username = Username
     password = Password
+    port = 
+    host =
 
-Servername above is the name of the server (not the hostname and port). If logged into Plex Web you can see the server name in the top left above your available libraries.
+Servername above can be the name of the server (not the hostname and port) or <hostname|ip>:port.
+You can find the server name in plex web settings.
+token is a valid an registered token from your plexpass account 
+If token is set username and password are ignored otherwise username and password is needed to login.
 
 
 Project resources
 =================
 
-- `Source code <https://github.com/havardgulldahl/mopidy-plex>`_
-- `Issue tracker <https://github.com/havardgulldahl/mopidy-plex/issues>`_
+- `Source code <https://github.com/risiko79/mopidy_plex>`_
+- `Issue tracker <https://github.com/risiko79/mopidy_plex/issues>`_
 
 
 Credits
 =======
 
 - Original author: `@havardgulldahl <https://github.com/havardgulldahl>`_
-- Current maintainer: `@havardgulldahl <https://github.com/havardgulldahl>`_
-- `Contributors <https://github.com/havardgulldahl/mopidy-plex/graphs/contributors>`_
+- Current maintainer: `@risiko79 <https://github.com/risiko79>`_
+- `Contributors <https://github.com/risiko79/mopidy_plex/graphs/contributors>`_
 
 
 Changelog
@@ -90,10 +78,17 @@ v0.1.0b (2016-02-02)
 - Initial beta release.
 - Listing and searching Plex Server content works.
 - Playing audio works.
-- Please `file bugs <https://github.com/havardgulldahl/mopidy-plex/issues>`_.
 
 
 v0.1.0c (2016-06-29)
 ----------------------------------------
 
 - Add support for remote Plex Servers
+
+v0.2.0 (2022-01-03)
+----------------------------------------
+
+- ported to python 3
+- ported to current python-plexapi version
+- added frontend to act mopity as a plex client
+- add plex-token support

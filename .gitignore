@@ -12,5 +12,6 @@ include/
 lib/
 
 .Python
+.vscode/
 
 pip-selfcheck.json
