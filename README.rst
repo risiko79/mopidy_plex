@@ -2,31 +2,19 @@
 Mopidy-Plex
 ****************************
 
-.. image:: https://img.shields.io/pypi/v/Mopidy-Plex.svg?style=flat
-    :target: https://pypi.python.org/pypi/Mopidy-Plex/
-    :alt: Latest PyPI version
-
-.. image:: https://img.shields.io/pypi/dm/Mopidy-Plex.svg?style=flat
-    :target: https://pypi.python.org/pypi/Mopidy-Plex/
-    :alt: Number of PyPI downloads
-
 Mopidy extension for playing audio from a Plex server and make mopidy to a plex client
 
 
 Installation
 ============
 
+Download::
+    
+    Download latest whl package from https://github.com/risiko79/mopidy_plex/releases/latest
+
 Install by running::
 
-    pip install Mopidy-Plex
-
-Or, if available, install the Debian/Ubuntu package from `apt.mopidy.com
-<http://apt.mopidy.com/>`_.
-
-
-And you need the `python-plexapi` module as well::
-
-    pip install plexapi
+    pip install Mopidy_Plex-<latest_version>-py3-none-any.whl
 
 
 Configuration
@@ -68,27 +56,5 @@ Credits
 Changelog
 =========
 
-v0.1.0 (UNRELEASED)
-----------------------------------------
+ - https://github.com/risiko79/mopidy_plex/releases
 
-
-v0.1.0b (2016-02-02)
-----------------------------------------
-
-- Initial beta release.
-- Listing and searching Plex Server content works.
-- Playing audio works.
-
-
-v0.1.0c (2016-06-29)
-----------------------------------------
-
-- Add support for remote Plex Servers
-
-v0.2.0 (2022-01-03)
-----------------------------------------
-
-- ported to python 3
-- ported to current python-plexapi version
-- added frontend to act mopity as a plex client
-- add plex-token support
