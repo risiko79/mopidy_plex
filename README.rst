@@ -58,3 +58,47 @@ Changelog
 
  - https://github.com/risiko79/mopidy_plex/releases
 
+
+Logging
+=========
+
+enabled logging in mopidy::
+
+    [logging]
+    config_file =<path to log configuration>/logging.conf
+
+example logging configuration::
+    
+    [loggers]
+    keys = root,plex
+
+    [handlers]
+    keys = file,fileplex
+
+    [formatters]
+    keys = simple
+
+    [logger_root]
+    handlers = file
+
+    [handler_file]
+    class = handlers.RotatingFileHandler
+    formatter = simple
+    level = INFO
+    args = ('<path>/mopidy.log','a',100000,10,)
+
+    [handler_fileplex]
+    class = handlers.RotatingFileHandler
+    formatter = simple
+    level = DEBUG
+    args = ('<path>/mopidy_plex.log','a',100000,10,)
+
+    [formatter_simple]
+    format = %(asctime)s %(levelname)s %(name)s(%(lineno)d): %(message)s
+
+    [logger_plex]
+    level = DEBUG
+    handlers = fileplex 
+    qualname = mopidy_plex
+    propagate = 1
+

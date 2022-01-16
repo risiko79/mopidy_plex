@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 from setuptools import find_packages, setup
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 setup(
     name='Mopidy-Plex',
@@ -37,5 +37,5 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Multimedia :: Sound/Audio :: Players',
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.8",
 )
