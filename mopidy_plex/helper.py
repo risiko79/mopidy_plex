@@ -79,6 +79,9 @@ class MopidyPlexHelper(object):
 
         self._plexserver = None
         for dev in self._plexaccount.devices():
+            if not 'server' in dev.provides:
+                continue
+            logger.info("plex server %s found" % dev.name)
             if dev.name.lower() == config['server'].lower():
                 self._plexserver = dev.connect()
                 break        
