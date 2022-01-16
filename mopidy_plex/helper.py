@@ -16,6 +16,21 @@ from .utils import *
 
 logger = logging.getLogger(__name__)
 
+class MopidyPlexAccount(MyPlexAccount):
+    
+    def _headers(self, **kwargs):
+        """ Returns dict containing base headers for all requests to the server. """
+        headers = super()._headers()
+        headers.update(kwargs)
+        headers['X-Plex-Device-Name'] = settings.get('name',headers['X-Plex-Device-Name'])
+        headers['X-Plex-Product'] = settings.get('product',headers['X-Plex-Product'])
+        headers['X-Plex-Version'] = settings.get('version','1')
+        provides = headers.get('X-Plex-Provides', "player,controller").split(',')
+        if not 'player'in provides:
+            provides.append('player')
+            headers['X-Plex-Provides'] = ','.join(provides)
+        return headers 
+
 class MopidyPlexHelper(object):
 
     _instance = None
@@ -50,12 +65,12 @@ class MopidyPlexHelper(object):
         self._core = None
         token=config['token']
         if token is None:
-            self._plexaccount = MyPlexAccount(
+            self._plexaccount = MopidyPlexAccount(
                 username=config['username'],
                 password=config['password'],
                 session=session)
         else:
-            self._plexaccount = MyPlexAccount(
+            self._plexaccount = MopidyPlexAccount(
                 token=token,
                 session = session
             )
@@ -80,14 +95,7 @@ class MopidyPlexHelper(object):
     def headers(self) -> dict:
         if self._plexaccount is None:
             return {}
-        h = self._plexaccount._headers()        
-        h['X-Plex-Device-Name'] = settings.get('name',h['X-Plex-Device-Name'])
-        h['X-Plex-Product'] = settings.get('product',h['X-Plex-Product'])
-        h['X-Plex-Version'] = settings.get('version','1')
-        provides = h.get('X-Plex-Provides', "player,controller").split(',')
-        if not 'player'in provides:
-            provides.append('player')
-            h['X-Plex-Provides'] = ','.join(provides)
+        h = self._plexaccount._headers()
         return h
 
     @property
