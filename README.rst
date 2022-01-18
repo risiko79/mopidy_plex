@@ -16,6 +16,8 @@ Install by running::
 
     pip install Mopidy_Plex-<latest_version>-py3-none-any.whl
 
+.. note:: install mopity-plex as the user running mopity
+
 
 Configuration
 =============
@@ -32,10 +34,10 @@ Mopidy-Plex to your Mopidy configuration file::
     port = 
     host =
 
-Servername above can be the name of the server (not the hostname and port) or <hostname|ip>:port.
+'Servername' above can be the name of the server (not the hostname and port) or it could be <hostname|ip>:port.
 You can find the server name in plex web settings.
-token is a valid an registered token from your plexpass account 
-If token is set username and password are ignored otherwise username and password is needed to login.
+'token' is a valid registered token from your plexpass account 
+If 'token' is set username and password are ignored otherwise username and password is needed to login.
 
 
 Project resources
@@ -59,15 +61,15 @@ Changelog
  - https://github.com/risiko79/mopidy_plex/releases
 
 
-Logging
-=========
+Logging/Debugging
+=================
 
 enabled logging in mopidy::
 
     [logging]
     config_file =<path to log configuration>/logging.conf
 
-example logging configuration::
+example logging configuration to debug mopity-plex::
     
     [loggers]
     keys = root,plex
