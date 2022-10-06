@@ -33,11 +33,13 @@ Mopidy-Plex to your Mopidy configuration file::
     password = Password
     port = 
     host =
+    profile = 
 
 'Servername' above can be the name of the server (not the hostname and port) or it could be <hostname|ip>:port.
 You can find the server name in plex web settings.
 'token' is a valid registered token from your plexpass account 
 If 'token' is set username and password are ignored otherwise username and password is needed to login.
+'profile' is plex home user to switch after login
 
 
 Project resources
