@@ -6,3 +6,4 @@ settings['debug_registration'] = False
 settings['debug_httpd'] = False
 settings['host'] = ""
 settings['token'] = None
+settings['profile'] = None

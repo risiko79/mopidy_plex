@@ -24,6 +24,7 @@ class Extension(ext.Extension):
         schema['token'] = config.Secret(optional=True)
         schema['username'] = config.String(optional=True)
         schema['password'] = config.Secret(optional=True)
+        schema['profile'] = config.String(optional=True)
 
         #frontend config        
         schema["port"] = config.Port(optional=True)

@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 from setuptools import find_packages, setup
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 setup(
     name='Mopidy-Plex',
@@ -22,7 +22,7 @@ setup(
         'setuptools>=42',
         'wheel',
         'Mopidy>=3',
-        'PlexAPI>=4.7',
+        'PlexAPI>=4.13',
     ],
     entry_points={
         'mopidy.ext': [

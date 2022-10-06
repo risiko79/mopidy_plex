@@ -63,7 +63,8 @@ class MopidyPlexHelper(object):
         if config is None:
             return
         self._core = None
-        token=config['token']
+        token=config.get('token', None)
+        user=config.get('profile', None)
         if token is None:
             self._plexaccount = MopidyPlexAccount(
                 username=config['username'],
@@ -77,18 +78,32 @@ class MopidyPlexHelper(object):
 
         token = self._plexaccount.authenticationToken
 
-        self._plexserver = None
-        for dev in self._plexaccount.devices():
+        _plexserver = None
+        devices = self._plexaccount.devices()
+        for dev in devices:
             if not 'server' in dev.provides:
                 continue
             logger.info("plex server %s found" % dev.name)
             if dev.name.lower() == config['server'].lower():
-                self._plexserver = dev.connect()
+                _plexserver = dev.connect()
                 break        
         
-        if self._plexserver is None:
-            self._plexserver = PlexServer(config['server'], session=session, token=token)
+        if _plexserver is None:
+            try:
+                _plexserver = PlexServer(config['server'], session=session, token=token)
+            except:
+                logger.error("no plex server found")
+                return
 
+        self._plex_admin_server = _plexserver
+        if user is not None:
+            try:
+                _plexserver = _plexserver.switchUser(user)
+            except Exception as ex:
+                logger.error("switch to user %s failed: %s",user,str(ex))
+        
+        self._plexserver = _plexserver
+    
 
     @property
     def server(self):
