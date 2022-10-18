@@ -171,6 +171,8 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         elif request_path == "player/playback/skipPrevious":
             params['direction'] = -1
             self._handleResult(MPH.get().skip(params))
+        elif request_path == "player/playback/skipTo":
+            self._handleResult(MPH.get().skipTo(params))
         else:
             logger.warning("unknown request: %s %s" % (request_path, params_org))
             self.response("",code=HTTPStatus.NOT_IMPLEMENTED) # 501 Not Implemented (en-US)            

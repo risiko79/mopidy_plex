@@ -280,6 +280,26 @@ class MopidyPlexHelper(object):
         ret = self._playback.seek(millis).get()
         return ret
 
+    def skipTo(self, params:dict):
+        key = params.get('key',None)
+        if key is None:
+            return False
+        ret = False
+        sel_track_id = parseKey(key)
+        features:pykka.ThreadingFuture = self._tracklist.get_tl_tracks().join()
+        tl_tracks = None
+        try:
+            ret = features.get(1)
+            tl_tracks = ret[0]
+        except:
+            return False
+
+        for tl_track in tl_tracks:
+            if parseKey(tl_track.track.uri) == sel_track_id:
+                ret = self._playback.play(tl_track = tl_track)
+        return ret
+
+
     def set(self, params:dict):
         volume = params.get('volume', None)
         ret = False
