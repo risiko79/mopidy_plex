@@ -34,6 +34,7 @@ class PlexRegister:
         self.client_data+= "Protocol-Version: 1\r\n"
         self.client_data+= "Product: %s\r\n" % getProduct(headers)        
         self.client_data+= "Protocol-Capabilities: timeline,playback,playqueues,playqueues-creation\r\n"
+        #self.client_data+= "Protocol-Capabilities: timeline,mirror,playback,playqueues,playqueues-creation\r\n"
         self.client_data+= "Device-Class: stb"
         logger.debug("client data %s" % self.client_data)
 
@@ -78,19 +79,26 @@ class PlexRegister:
         
         #Now, listen for client discovery reguests and respond.
         while self._registration_is_running:
+            addr = ""
+            data = ""
             try:
                 bdata, addr = update_sock.recvfrom(1024)
-                data = bdata.decode('utf-8')
-                logger.debug("Recieved UDP packet from [%s] containing [%s]" % (addr, data.strip()))
+                data = bdata.decode('utf-8').strip()
             except Exception as ex:
                 # no error
-                data = ""
+                pass
+
+            if len(data) == 0:
+                continue
+
             if "M-SEARCH * HTTP/1." in data:
+                #logger.debug("Recieved M-SEARCH UDP packet from [%s]" % addr)
                 try:
                     update_sock.sendto(("HTTP/1.1 200 OK\r\n%s" % self.client_data).encode(encoding = 'UTF-8'), addr)
                 except Exception:
                     logger.exception("Unable to send client update message %s" % str(ex))
             else:
+                logger.debug("Recieved UDP packet from [%s] containing [%s]" % (addr, data))
                 time.sleep(0.5)
 
         logger.debug("Client Update loop stopped")

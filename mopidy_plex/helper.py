@@ -15,7 +15,7 @@ from .settings import settings
 from .utils import *
 
 logger = logging.getLogger(__name__)
-
+no_value = "NO VALUE"
 class MopidyPlexAccount(MyPlexAccount):
     
     def _headers(self, **kwargs):
@@ -25,10 +25,8 @@ class MopidyPlexAccount(MyPlexAccount):
         headers['X-Plex-Device-Name'] = settings.get('name',headers['X-Plex-Device-Name'])
         headers['X-Plex-Product'] = settings.get('product',headers['X-Plex-Product'])
         headers['X-Plex-Version'] = settings.get('version','1')
-        provides = headers.get('X-Plex-Provides', "player,controller").split(',')
-        if not 'player'in provides:
-            provides.append('player')
-            headers['X-Plex-Provides'] = ','.join(provides)
+        provides = "client,player,pubsub-player,controller".split(',')
+        headers['X-Plex-Provides'] = ','.join(provides)
         return headers 
 
 class MopidyPlexHelper(object):
@@ -79,6 +77,7 @@ class MopidyPlexHelper(object):
         token = self._plexaccount.authenticationToken
 
         _plexserver = None
+        self._plexserver = None
         devices = self._plexaccount.devices()
         for dev in devices:
             if not 'server' in dev.provides:
@@ -132,7 +131,7 @@ class MopidyPlexHelper(object):
     def set_mopidy_core(self, core):
         self._mopidy_core = core
 
-    def getTimeline(self, commandID:int=0):
+    def getTimeline(self, commandID = None):
         h = self._plexaccount._headers()
 
         state = mpc.PlaybackState.STOPPED   
@@ -154,19 +153,20 @@ class MopidyPlexHelper(object):
                 volume = 100
         except:
             pass
+        
+        if commandID is None:
+            commandID = 'COMMANDID_UNKNOWN'
 
-        if track is None:            
-            return getOKMsg()
-
+        ident = getIdentifier(h)
         c = ""
-        c += '<MediaContainer size="3" machineIdentifier="%s" commandID="%s">' % (getIdentifier(h),commandID)
+        c += '<MediaContainer size="3" machineIdentifier="%s" commandID="%s">' % (ident,commandID)
         c += '<Timeline type="video" state="stopped"/>'
         c += '<Timeline type="photo" state="stopped"/>'
         c += '</MediaContainer>'
         container:ET.Element= ET.fromstring(c)
         
         controllable="playPause,stop,volume,shuffle,repeat,skipPrevious,skipNext,stepBack,stepForward,seekTo"
-        m = '<Timeline type="music" itemType="music" state="stopped" controllable="%s"/>' % controllable
+        m = '<Timeline type="music" itemType="music" state="stopped" controllable="%s"/>' % (controllable)
         t_music:ET.Element = ET.fromstring(m)
 
         if state == mpc.PlaybackState.STOPPED:
@@ -178,39 +178,48 @@ class MopidyPlexHelper(object):
         else:
             logger.error('unknown state %s', str(state))
 
-        ratingKey = parseKey(track.uri)
+        ratingKey = no_value
+        duration = no_value
+        if track:
+            ratingKey = parseKey(track.uri)
+            duration = str(track.length)
 
         t_music.set('playbackTime', str(tpos))
-        t_music.set('duration', str(track.length))                        
+        t_music.set('duration', duration)                        
         t_music.set('playQueueVersion',"1")
         t_music.set('ratingKey', ratingKey)
         t_music.set('key', '/library/metadata/%s' % ratingKey)
-        t_music.set('adState',"NO_VALUE")
+        t_music.set('adState',no_value)
         t_music.set('repeat', "0")
-        t_music.set('offline', "NO_VALUE")
-        t_music.set('protocol', self._playingInfos.get('protocol',"NO_VALUE"))
-        t_music.set('bufferedTime', self._playingInfos.get('bufferedTime',"NO_VALUE"))
-        t_music.set('address', self._playingInfos.get('address',"NO_VALUE"))
-        t_music.set('timeToFirstFrame', self._playingInfos.get('timeToFirstFrame',"NO_VALUE"))
-        t_music.set('machineIdentifier', self._playingInfos.get('machineIdentifier',"NO_VALUE"))
-        t_music.set('bandwidth', self._playingInfos.get('bandwidth',"NO_VALUE"))
+        t_music.set('offline', no_value)
+        t_music.set('protocol', self._playingInfos.get('protocol',no_value))
+        t_music.set('bufferedTime', self._playingInfos.get('bufferedTime',no_value))
+        t_music.set('address', self._playingInfos.get('address',no_value))
+        t_music.set('timeToFirstFrame', self._playingInfos.get('timeToFirstFrame',no_value))
+        t_music.set('machineIdentifier', self._playingInfos.get('machineIdentifier',no_value))
+        t_music.set('bandwidth', self._playingInfos.get('bandwidth',no_value))
         t_music.set('mediaIndex', self._playingInfos.get('mediaIndex',"0"))
-        t_music.set('timeStalled', self._playingInfos.get('timeStalled',"NO_VALUE"))
-        t_music.set('bufferedSize', self._playingInfos.get('bufferedSize',"NO_VALUE"))
-        t_music.set('url', self._playingInfos.get('url',"null"))
-        t_music.set('token', self._playingInfos.get('token',"NO_VALUE"))
+        t_music.set('timeStalled', self._playingInfos.get('timeStalled',no_value))
+        t_music.set('bufferedSize', self._playingInfos.get('bufferedSize',no_value))
+        t_music.set('url', self._playingInfos.get('url',no_value))
+        t_music.set('token', self._playingInfos.get('token',no_value))
         t_music.set('volume', str(volume))
-        t_music.set('providerIdentifier', self._playingInfos.get('machineIdentifier',"NO_VALUE"))
-        t_music.set('port', self._playingInfos.get('port',"NO_VALUE"))            
-        t_music.set('containerKey', self._playingInfos.get('containerKey',"NO_VALUE"))
-        t_music.set('playQueueItemID', self._playingInfos.get('playQueueItemID',"NO_VALUE"))
-        t_music.set('adDuration', self._playingInfos.get('adDuration',"NO_VALUE"))
+        t_music.set('providerIdentifier', self._playingInfos.get('machineIdentifier',no_value))
+        t_music.set('port', self._playingInfos.get('port',no_value))            
+        t_music.set('containerKey', self._playingInfos.get('containerKey',no_value))
+        t_music.set('playQueueItemID', self._playingInfos.get('playQueueItemID',no_value))
+        tmp = self._playingInfos.get('containerKey',no_value).split('/')
+        t_music.set('playQueueID', no_value)
+        if len(tmp)>1:
+            t_music.set('playQueueID', str(tmp[2]))
+        t_music.set('adDuration', self._playingInfos.get('adDuration',no_value))
         t_music.set('time', str(tpos))
         t_music.set('shuffle', self._playingInfos.get('shuffle',"0"))
-        t_music.set('updated', self._playingInfos.get('updated',"NO_VALUE"))
-        t_music.set('adTime', self._playingInfos.get('adTime',"NO_VALUE"))
+        t_music.set('updated', self._playingInfos.get('updated',no_value))
+        t_music.set('adTime', self._playingInfos.get('adTime',no_value))
+        t_music.set('guid', self._playingInfos.get('guid',no_value))
         queue:PlexPlayQueue = self._playingInfos.get('playQueue', None)
-        if queue:
+        if queue and ratingKey != no_value:
             for item in queue.items:
                 if item.ratingKey == int(ratingKey):
                     t_music.set('playQueueItemID', str(item.playQueueItemID))
@@ -230,7 +239,7 @@ class MopidyPlexHelper(object):
         containerKey = parseKey(params.get('containerKey',"None"))
 
         if containerKey is None:
-            params['containerKey'] = "NO_VALUE"
+            params['containerKey'] = no_value
         else:
             self._playingInfos['containerKey'] = '/playQueues/'+containerKey
             try:                    

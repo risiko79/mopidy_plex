@@ -2,12 +2,14 @@ from os import stat
 import re
 import threading
 import logging
+from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from .settings import settings
 from .utils import *
 from .helper import MopidyPlexHelper as MPH
+from .subscriber import SubScribers
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             self.answer_request()
         except Exception:
             logger.exception("")
-            self.response("",code= 500) #500 Internal Server Error
+            self.response("",code= HTTPStatus.INTERNAL_SERVER_ERROR) #500 Internal Server Error
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -65,6 +67,7 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         resp += ' protocol="plex"'
         resp += ' protocolVersion="1"'
         resp += ' protocolCapabilities="timeline,playback,playqueues,playqueues-creation"'
+        #resp += ' protocolCapabilities="timeline,playback,mirror,playqueues,playqueues-creation"'
         resp += ' machineIdentifier="%s"' % getIdentifier(h)
         resp += ' product="%s"' % getProduct(h)
         resp += ' platform="%s"' % getPlatform(h)
@@ -75,7 +78,7 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         resp += "</MediaContainer>"
         return resp    
 
-    def response(self, body:str, code = 200, headers = {}):
+    def response(self, body:str, code = HTTPStatus.OK, headers = {}):
         try:
             self.send_response(code)
             h = MPH.get().headers
@@ -97,19 +100,27 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         if result:
             self.response(getOKMsg())
         else:
-            self.response("",code=500) #500 Internal Server Error
+            self.response("",code=HTTPStatus.INTERNAL_SERVER_ERROR) #500 Internal Server Error
+        
 
     def answer_request(self):
         request_path=self.path[1:]
         request_path=re.sub(r"\?.*","",request_path)
         url = urlparse(self.path)
         paramarrays = parse_qs(url.query)
-        params = {}
+        params = {}        
         for key in paramarrays:
             params[key] = paramarrays[key][0]
 
         if not '/poll' in request_path:
             logger.debug("request from %s is: [%s] with params %s" % (self.client_address[0], request_path, params))
+
+        params_org = params.copy()
+        params.update(self.headers)
+
+        commandID = params.get('commandID', None)
+        if commandID:
+            SubScribers.get().updateCommandID(params, commandID)
 
         if request_path=="version":
             self.response(getVersion(MPH.get().headers))
@@ -119,20 +130,23 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             resp = self._getPlayerCapabilities()
             self.response(resp, headers={'Cache-Control':'private, no-cache, no-store, must-revalidate'})
         elif "/subscribe" in request_path:
-            self.response(getOKMsg())                
-        elif "/poll" in request_path:                
-            commandID = params.get('commandID', 0)
-            wait = params.get('wait', 0)
-            h = {'Access-Control-Expose-Headers':'X-Plex-Client-Identifier'}            
+            params['host'] = self.client_address[0]
+            self.response(getOKMsg())
+            SubScribers.get().add(params)                
+        elif "/poll" in request_path:            
+            params['commandID'] = commandID
+            wait = params.get('wait', 0)                       
+            h = {'Access-Control-Expose-Headers':'X-Plex-Client-Identifier'}
             if wait:
-                resp = MPH.get().getTimeline(commandID)
+                timeline = SubScribers.get().createTimeline(commandID)
                 if settings.get('debug_poll',False):
-                    logger.debug("poll response: %s" % resp)
-                self.response(resp, headers=h)
+                    logger.debug("poll response: %s" % timeline)
+                self.response(timeline, headers=h)              
             else:
                 self.response(getOKMsg(),headers=h)
-        elif "/unsubscribe" in request_path:            
-            self.response(getOKMsg())
+        elif "/unsubscribe" in request_path:
+            self.response(getOKMsg())            
+            SubScribers.get().remove(params)
         elif "/playMedia" in request_path:
             self._handleResult(MPH.get().playMedia(params))
         elif request_path == "player/playback/play":
@@ -158,8 +172,8 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             params['direction'] = -1
             self._handleResult(MPH.get().skip(params))
         else:
-            logger.warning("unknown request: %s %s" % (request_path, params))
-            self.response("",code=501) # 501 Not Implemented (en-US)            
+            logger.warning("unknown request: %s %s" % (request_path, params_org))
+            self.response("",code=HTTPStatus.NOT_IMPLEMENTED) # 501 Not Implemented (en-US)            
         
         
         '''
@@ -187,18 +201,22 @@ class PlexClientHTTPServer(ThreadingHTTPServer):
     '''
     Threaded HTTP Server for remote control
     '''
+    _subScribers:SubScribers = None
+
     def __init__(self):
-        self.playingInfos = {}
         con = (settings['host'], settings['port'])
         logger.debug("init with %s " % str(con))
+        SubScribers.create()
         super().__init__(con, PlexClientRequestHandler)
 
     def start(self):
         self._httpd_t = threading.Thread(target=self.serve_forever,args=(0.5,))
         self._httpd_t.setDaemon(True)
         self._httpd_t.start()
+        SubScribers.get().start()
 
     def stop(self):
+        SubScribers.get().stop()
         self.shutdown()
         self._httpd_t.join()
         del self._httpd_t
