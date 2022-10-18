@@ -50,6 +50,9 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
         h = MopidyPlexHelper.create(self.config, self.session)
         self.plexsrv = h.server
 
+    def on_start(self):
+        if self.plexsrv is None:
+            raise Exception("no plex server found")
 
     def plex_uri(self, uri_path:str, prefix='plex'):
         'Get a leaf uri and complete it to a mopidy plex uri'
@@ -68,6 +71,8 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
 
     @cache(CACHING_TIME)  
     def wrap_track(self, plextrack, include_meta:bool=False):
+        if self.plexsrv is None:
+            return None
         '''Wrap a plexapi.audio.Track to mopidy.model.track'''
         uri = self.plex_uri(plextrack.key, 'plex:track')
         
@@ -88,12 +93,16 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
 
     @cache(CACHING_TIME)
     def wrap_artist(self, plexartist):
+        if self.plexsrv is None:
+            return None
         '''Wrap a plex plexapi.audio.Artist result to mopidy.model.artist'''
         return Artist(uri=self.plex_uri(plexartist.key, 'plex:artist'),
                         name=plexartist.title)
 
     @cache(CACHING_TIME)
     def wrap_album(self,plexalbum):
+        if self.plexsrv is None:
+            return None
         '''Wrap a plex plexapi.audio.Album to mopidy.model.album'''
         return Album(
             uri=self.plex_uri(plexalbum.key, 'plex:album'),
