@@ -80,8 +80,12 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
 
     def response(self, body:str, code = HTTPStatus.OK, headers = {}):
         try:
-            self.send_response(code)
+            codeid = code
+            if isinstance(code, HTTPStatus):
+                codeid = code.value
+            self.send_response(codeid)
             h = MPH.get().headers
+            h.update({'Access-Control-Expose-Headers':'X-Plex-Client-Identifier'})
             h.update(headers)
             for key in h:
                 self.send_header(key, h[key])
@@ -120,6 +124,7 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
 
         commandID = params.get('commandID', None)
         if commandID:
+            params['commandID'] = commandID
             SubScribers.get().updateCommandID(params, commandID)
 
         if request_path=="version":
@@ -134,16 +139,16 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             self.response(getOKMsg())
             SubScribers.get().add(params)                
         elif "/poll" in request_path:            
-            params['commandID'] = commandID
+            if commandID is None:
+                commandID = '0'
             wait = params.get('wait', 0)                       
-            h = {'Access-Control-Expose-Headers':'X-Plex-Client-Identifier'}
             if wait:
-                timeline = SubScribers.get().createTimeline(commandID)
+                timeline = MPH.get().getTimeline(commandID)
                 if settings.get('debug_poll',False):
                     logger.debug("poll response: %s" % timeline)
-                self.response(timeline, headers=h)              
+                self.response(timeline)              
             else:
-                self.response(getOKMsg(),headers=h)
+                self.response(getOKMsg())
         elif "/unsubscribe" in request_path:
             self.response(getOKMsg())            
             SubScribers.get().remove(params)

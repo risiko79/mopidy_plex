@@ -111,20 +111,19 @@ class PlexRegister:
             logger.exception("Unable to send client update message")                         
 
     def stop(self):
-        if self._registration_is_running:
-            logger.debug("Registration shutting down")
-            self._registration_is_running = False
-            self.register_t.join()
-            del self.register_t
-        else:
-            logger.warning("Registration not running")    
+        if not self._registration_is_running:
+            return
+        logger.debug("Registration shutting down")
+        self._registration_is_running = False
+        self.register_t.join()
+        del self.register_t
+        
         
     def start(self):
-        if not self._registration_is_running:
-            logger.debug("Registration starting up")
-            self._registration_is_running = True
-            self.register_t = threading.Thread(target=self._run_registration)
-            self.register_t.setDaemon(True)
-            self.register_t.start()
-        else:
-            logger.warning("Registration already running")
+        if self._registration_is_running:
+            return
+        logger.debug("Registration starting up")
+        self._registration_is_running = True
+        self.register_t = threading.Thread(target=self._run_registration)
+        self.register_t.setDaemon(True)
+        self.register_t.start()

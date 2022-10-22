@@ -89,14 +89,14 @@ class SubScribers(object):
             with self._lock:
                 keys =  self._subscribers.keys()
                 if len(keys):
-                    timeline_org = self.createTimeline()
+                    timeline_org = MPH.get().getTimeline(None)
                     for k in keys:
                         client = self._subscribers[k]
                         if client is not None:
                             timeline = timeline_org.replace('COMMANDID_UNKNOWN', client.cmdID)
                             try:
                                 client.updateTimeline(timeline)
-                            except ConnectionError:
+                            except:
                                 del self._subscribers[k]
                                 del client
 
@@ -151,12 +151,9 @@ class SubScribers(object):
         with self._lock:
             client = self._subscribers[identifier]
             if client is None:
+                del self._subscribers[identifier]
                 return
             client.cmdID = commandID
-
-    def createTimeline(self, commandID = None):
-        timeline = MPH.get().getTimeline(commandID)
-        return timeline
 
 
     
