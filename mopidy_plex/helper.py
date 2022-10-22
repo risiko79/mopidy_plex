@@ -1,3 +1,4 @@
+from array import array
 import logging
 
 from plexapi.myplex import MyPlexAccount
@@ -264,12 +265,73 @@ class MopidyPlexHelper(object):
                 self._playingInfos['playQueue'] = None
         if len(uris) == 0:
             uris.append('plex:track:%s' % sel_track_id)
-        state = self._playback.get_state().get()
-        if state != mpc.PlaybackState.STOPPED:
-            self._playback.stop().get()
-        self._tracklist.clear().get() 
-        self._tracklist.add(uris=uris).get()
-        return self._skipTo(sel_track_id) 
+        
+        self._refreshPlayQueue(uris)
+        return self._skipTo(sel_track_id)
+
+    def refreshPlayQueue(self, params:dict):
+        playQueueID = params.get('playQueueID',None)
+        uris = []
+        if playQueueID is None:
+            return False
+        else:
+            self._playingInfos['containerKey'] = '/playQueues/'+playQueueID
+            q = PlexPlayQueue.get(server = self._plexserver, playQueueID=int(playQueueID))
+            self._playingInfos['playQueue'] = q
+            for item in q.items:
+                uris.append('plex:track:%s' % item.ratingKey)
+        return self._refreshPlayQueue(uris)
+
+    def _refreshPlayQueue(self, uris:array):
+        tl_tracks = self._tracklist.get_tl_tracks().get()
+
+        # remove
+        r_filter = {'uri':[]}
+        for tl_track in tl_tracks:
+            found = False
+            for plex_uri in uris:
+                if tl_track.track.uri == plex_uri:
+                    found = True
+                    break
+            if not found:
+                r_filter['uri'].append(tl_track.track.uri)
+
+        if len(r_filter['uri']):
+            self._tracklist.remove(r_filter).get()
+            tl_tracks = self._tracklist.get_tl_tracks().get()
+        
+        # add new
+        add = []
+        for plex_uri in uris:
+            found = False
+            for tl_track in tl_tracks:                
+                if tl_track.track.uri == plex_uri:
+                    found = True
+                    break
+            if not found:
+                add.append(plex_uri)
+        if len(add):
+            cur_tl_track = self._playback.get_current_tl_track().get()
+            at_position = None
+            if cur_tl_track:
+                at_position = self._tracklist.index(tl_track=cur_tl_track).get()+1
+            self._tracklist.add(uris=add, at_position=at_position).get()
+            tl_tracks = self._tracklist.get_tl_tracks().get()
+        
+        assert len(tl_tracks) == len(uris)
+
+        # sort
+        for tl_track in tl_tracks:
+            idx_plex = 0
+            for plex_uri in uris:
+                if tl_track.track.uri == plex_uri:
+                    found = True
+                    idx = self._tracklist.index(tl_track=tl_track).get()
+                    if idx != idx_plex:
+                        self._tracklist.move(idx,idx,idx_plex).get()
+                    break
+                idx_plex = idx_plex + 1            
+        return True
 
     def resume(self, params:dict):
         self._playback.resume().get()

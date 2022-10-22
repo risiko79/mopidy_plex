@@ -178,6 +178,8 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             self._handleResult(MPH.get().skip(params))
         elif request_path == "player/playback/skipTo":
             self._handleResult(MPH.get().skipTo(params))
+        elif request_path == "player/playback/refreshPlayQueue":
+            self._handleResult(MPH.get().refreshPlayQueue(params))
         else:
             logger.warning("unknown request: %s %s" % (request_path, params_org))
             self.response("",code=HTTPStatus.NOT_IMPLEMENTED) # 501 Not Implemented (en-US)            
@@ -199,8 +201,6 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         elif request_path == "player/navigation/home":
             self.response(getOKMsg())                
         elif request_path == "player/navigation/back":
-            self.response(getOKMsg())
-        elif request_path == "player/playback/refreshPlayQueue":
             self.response(getOKMsg())
         '''
 
