@@ -32,10 +32,11 @@ class PlexRegister:
         self.client_data+= "Protocol: plex\r\n"
         self.client_data+= "Protocol-Version: 1\r\n"
         self.client_data+= "Protocol-Capabilities: timeline,playback,playqueues,playqueues-creation\r\n"
-        #self.client_data+= "Protocol-Capabilities: timeline,mirror,playback,playqueues,playqueues-creation\r\n"
+        #self.client_data+= "Protocol-Capabilities: timeline,mirror,playback,playqueues,playqueues-creation,provider-playback\r\n"
         self.client_data+= "Resource-Identifier: %s\r\n" % self.client_id
+        self.client_data+= "Updated-At: %s\r\n" % int(time.time()) # 
         self.client_data+= "Version: %s\r\n" % getVersion(headers)
-        #self.client_data+= "Device-Class: stb\r\n"
+        
         logger.debug("client data %s" % self.client_data)
 
     def __del__(self):
