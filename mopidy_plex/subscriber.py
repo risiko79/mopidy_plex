@@ -1,8 +1,10 @@
 import logging
 import threading
 import time
+import xml.etree.ElementTree as ET
 from http.client import *
 from .helper import MopidyPlexHelper as MPH
+from .utils import getXMLHeader
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,13 @@ class SubScriber():
 
     def disconnect(self):
         if self._con:
+            c = MPH.get().getTimelineContainerXML(self._commandId)
+            c.set("disconnected","1")
+            t = ET.tostring(c, encoding = 'unicode', xml_declaration=getXMLHeader())
+            try:
+                self.updateTimeline(t)
+            except:
+                pass
             self._con.close()
 
     def updateTimeline(self, timeline:str):
@@ -88,19 +97,32 @@ class SubScribers(object):
         while self._subscription_is_running:
             with self._lock:
                 keys =  self._subscribers.keys()
+                remove_c = []
                 if len(keys):
                     timeline_org = MPH.get().getTimeline(None)
                     for k in keys:
                         client = self._subscribers[k]
+                        
                         if client is not None:
                             timeline = timeline_org.replace('COMMANDID_UNKNOWN', client.cmdID)
                             try:
                                 client.updateTimeline(timeline)
                             except:
-                                del self._subscribers[k]
-                                del client
+                                logger.info("updateTimeline for subscriber %s failed - removed subscriber" % k)
+                                remove_c.append(k)
+                for k in remove_c:
+                    client = self._subscribers[k]
+                    del client
+                    del self._subscribers[k]
 
             time.sleep(0.5)
+        with self._lock:
+            keys =  self._subscribers.keys()
+            for k in keys:
+                client = self._subscribers[k]
+                client.disconnect()
+                del client
+            self._subscribers = {}
 
     def start(self):
         if self._sub_t is None:

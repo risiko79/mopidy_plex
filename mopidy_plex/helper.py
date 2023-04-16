@@ -132,6 +132,17 @@ class MopidyPlexHelper(object):
     def set_mopidy_core(self, core):
         self._mopidy_core = core
 
+    def getTimelineContainerXML(self, commandID = None):
+        h = self._plexaccount._headers()
+        ident = getIdentifier(h)
+        c = ""
+        c += '<MediaContainer size="3" machineIdentifier="%s" commandID="%s">' % (ident,commandID)
+        c += '<Timeline type="music" state="stopped"/>'
+        c += '<Timeline type="video" state="stopped"/>'
+        c += '<Timeline type="photo" state="stopped"/>'
+        c += '</MediaContainer>'
+        return ET.fromstring(c)
+
     def getTimeline(self, commandID = None):
         h = self._plexaccount._headers()
 
@@ -160,13 +171,7 @@ class MopidyPlexHelper(object):
             commandID = 'COMMANDID_UNKNOWN'
             resp_ok = False
 
-        ident = getIdentifier(h)
-        c = ""
-        c += '<MediaContainer size="3" machineIdentifier="%s" commandID="%s">' % (ident,commandID)
-        c += '<Timeline type="video" state="stopped"/>'
-        c += '<Timeline type="photo" state="stopped"/>'
-        c += '</MediaContainer>'
-        container:ET.Element= ET.fromstring(c)
+        container:ET.Element = self.getTimelineContainerXML(commandID) 
         
         controllable="playPause,stop,volume,shuffle,repeat,skipPrevious,skipNext,stepBack,stepForward,seekTo"
         m = '<Timeline type="music" itemType="music" state="stopped" controllable="%s"/>' % (controllable)
@@ -239,9 +244,11 @@ class MopidyPlexHelper(object):
                     if item.ratingKey == int(ratingKey):
                         t_music.set('playQueueItemID', str(item.playQueueItemID))
                         break
+        t_music_old = list(container)[0]
+        container.remove(t_music_old)
         container.append(t_music)
-        c=ET.tostring(container, encoding = 'unicode', xml_declaration=getXMLHeader())
-        return c
+        t=ET.tostring(container, encoding = 'unicode', xml_declaration=getXMLHeader())
+        return t
 
     def playMedia(self, params:dict):        
         sel_track_id = parseKey(params['key'])
