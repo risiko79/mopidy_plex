@@ -91,8 +91,8 @@ class MopidyPlexHelper(object):
         if _plexserver is None:
             try:
                 _plexserver = PlexServer(config['server'], session=session, token=token)
-            except:
-                logger.error("no plex server found")
+            except Exception as ex:
+                logger.exception("no plex server found %s" % str(ex))
                 return
 
         self._plex_admin_server = _plexserver

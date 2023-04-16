@@ -55,8 +55,11 @@ class PlexBackend(pykka.ThreadingActor, backend.Backend):
             raise Exception("no plex server found")
 
     def on_stop(self):
-        pass
-
+        if self.plexsrv is None:
+            return
+        del self.plexsrv
+        self.plexsrv = None
+ 
     def plex_uri(self, uri_path:str, prefix='plex'):
         'Get a leaf uri and complete it to a mopidy plex uri'
         if not uri_path.startswith('/library/metadata/'):

@@ -13,6 +13,8 @@ from .subscriber import SubScribers
 
 logger = logging.getLogger(__name__)
 
+#plex protocol see https://github.com/plexinc/plex-media-player/wiki/Remote-control-API
+
 class PlexClientRequestHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
 
@@ -43,19 +45,6 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         except Exception:
             logger.exception("")
             self.response("",code= HTTPStatus.INTERNAL_SERVER_ERROR) #500 Internal Server Error
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Content-Length', '0')
-        self.send_header('X-Plex-Client-Identifier', getIdentifier())
-        self.send_header('Content-Type', 'text/plain')
-        self.send_header('Connection', 'close')
-        self.send_header('Access-Control-Max-Age', '1209600')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT, HEAD')
-        self.send_header('Access-Control-Allow-Headers', 'x-plex-version, x-plex-platform-version, x-plex-username, x-plex-client-identifier, x-plex-target-client-identifier, x-plex-device-name, x-plex-platform, x-plex-product, accept, x-plex-device')
-        self.end_headers()
-        self.wfile.close()
 
     def _getPlayerCapabilities(self):
         resp = getXMLHeader()

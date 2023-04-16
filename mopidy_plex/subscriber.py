@@ -119,15 +119,16 @@ class SubScribers(object):
 
     def add(self, data:dict):
         identifier = SubScriber.identifierFromParam(data)
-        if identifier not in self._subscribers:
-            client = SubScriber(data)
+        if identifier not in self._subscribers:            
+            subscriber = data.get("X-Plex-Device-Name","unknown")
+            logger.info("add subscriber %s (%s)" % (subscriber,identifier))
             with self._lock:
-                self._subscribers[client.identifier] = client
+                client = SubScriber(data)                
                 try:
                     client.connect()
+                    self._subscribers[client.identifier] = client
                 except Exception as ex:
                     logger.error(str(ex))
-                    pass
         else:
             pass
 
@@ -137,6 +138,7 @@ class SubScribers(object):
         if identifier not in self._subscribers:
             return
         with self._lock:
+            logger.info("remove subscriber %s" % identifier)
             client = self._subscribers[identifier]
             del self._subscribers[identifier]
             if client is None:

@@ -25,17 +25,17 @@ class PlexRegister:
         headers = MPH.get().headers
         self.client_id = getIdentifier(headers)
 
-        self.client_data = "Content-Type: plex/media-player\r\n"
+        self.client_data= "Content-Type: plex/media-player\r\n"
+        self.client_data+= "Name: %s\r\n" % getName(headers)     
         self.client_data+= "Port: %s\r\n" % str(settings['port'])
+        self.client_data+= "Product: %s\r\n" % getProduct(headers)   
         self.client_data+= "Protocol: plex\r\n"
-        self.client_data+= "Resource-Identifier: %s\r\n" % self.client_id 
-        self.client_data+= "Name: %s\r\n" % getName(headers)
-        self.client_data+= "Version: %s\r\n" % getVersion(headers)
         self.client_data+= "Protocol-Version: 1\r\n"
-        self.client_data+= "Product: %s\r\n" % getProduct(headers)        
         self.client_data+= "Protocol-Capabilities: timeline,playback,playqueues,playqueues-creation\r\n"
         #self.client_data+= "Protocol-Capabilities: timeline,mirror,playback,playqueues,playqueues-creation\r\n"
-        self.client_data+= "Device-Class: stb"
+        self.client_data+= "Resource-Identifier: %s\r\n" % self.client_id
+        self.client_data+= "Version: %s\r\n" % getVersion(headers)
+        #self.client_data+= "Device-Class: stb\r\n"
         logger.debug("client data %s" % self.client_data)
 
     def __del__(self):
@@ -69,8 +69,8 @@ class PlexRegister:
         
         #Send initial client registration
         try:
-            #msg = "HELLO %s\r\n%s" % ('* HTTP/1.1', self.client_data)
-            msg = "HELLO * HTTP/1.1\r\n"
+            #msg = "HELLO * HTTP/1.1\r\n"
+            msg = "HELLO * HTTP/1.1\r\n%s" % self.client_data
             update_sock.sendto(msg.encode(encoding = 'UTF-8'), self.multicast)
         except:
             logger.exception("Unable to send registeration message")
@@ -94,7 +94,9 @@ class PlexRegister:
             if "M-SEARCH * HTTP/1." in data:
                 #logger.debug("Recieved M-SEARCH UDP packet from [%s]" % addr)
                 try:
-                    update_sock.sendto(("HTTP/1.1 200 OK\r\n%s" % self.client_data).encode(encoding = 'UTF-8'), addr)
+                    #msg = "HELLO * HTTP/1.1\r\n%s" % self.client_data
+                    msg = "HTTP/1.1 200 OK\r\n%s" % self.client_data
+                    update_sock.sendto(msg.encode(encoding = 'UTF-8'), addr)
                 except Exception:
                     logger.exception("Unable to send client update message %s" % str(ex))
             else:
@@ -106,9 +108,11 @@ class PlexRegister:
         #When we are finished, then send a final goodbye message to deregister cleanly.
         logger.debug("Sending registration data: BYE")
         try:
-            update_sock.sendto(("BYE * HTTP/1.1\r\n%s" % self.client_data).encode(encoding = 'UTF-8'),self.multicast)
+            msg = "BYE * HTTP/1.1\r\n%s" % self.client_data
+            update_sock.sendto(msg.encode(encoding = 'UTF-8'),self.multicast)
         except Exception:
-            logger.exception("Unable to send client update message")                         
+            logger.exception("Unable to send client update message")
+        update_sock.close()                         
 
     def stop(self):
         if not self._registration_is_running:
