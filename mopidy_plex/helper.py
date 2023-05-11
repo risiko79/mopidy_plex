@@ -77,7 +77,7 @@ class MopidyPlexHelper(object):
 
         token = self._plexaccount.authenticationToken
 
-        _plexserver = None
+        _plexserver:PlexServer = None
         self._plexserver = None
         devices = self._plexaccount.devices()
         for dev in devices:
@@ -288,6 +288,27 @@ class MopidyPlexHelper(object):
             for item in q.items:
                 uris.append('plex:track:%s' % item.ratingKey)
         return self._refreshPlayQueue(uris)
+    
+    def createPlayQueue(self, params:dict):
+        plex_key = params.get('key',None)
+        if plex_key is None:
+            return False
+        plex_items = self._plexserver.fetchItems(ekey=plex_key)
+        
+        q = PlexPlayQueue.create(server = self._plexserver, items=plex_items,
+                repeat=int(params.get('repeat','0')),
+                shuffle=int(params.get('shuffle','0'))
+                )
+        self._playingInfos['playQueue'] = q
+        uris = []
+        first_track_id = None
+        for item in q.items:
+            if first_track_id is None:
+                first_track_id = str(item.ratingKey)
+            uris.append('plex:track:%s' % item.ratingKey)
+        if self._refreshPlayQueue(uris):
+            return self._skipTo(first_track_id)
+        return False
 
     def _refreshPlayQueue(self, uris:array):
         tl_tracks = self._tracklist.get_tl_tracks().get()

@@ -13,7 +13,10 @@ from .subscriber import SubScribers
 
 logger = logging.getLogger(__name__)
 
-#plex protocol see https://github.com/plexinc/plex-media-player/wiki/Remote-control-API
+# plex protocol see 
+# https://github.com/plexinc/plex-media-player/wiki/Remote-control-API
+# https://github.com/Arcanemagus/plex-api/wiki/Plex-Web-API-Overview
+# https://github.com/Arcanemagus/plex-api/wiki/Media-Player
 
 class PlexClientRequestHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
@@ -55,7 +58,7 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
         resp += ' title="%s"' % getName(h)
         resp += ' protocol="plex"'
         resp += ' protocolVersion="1"'
-        resp += ' protocolCapabilities="timeline,playback,playqueues,playqueues-creation"'
+        resp += ' protocolCapabilities="timeline,playback,playqueues"'
         #resp += ' protocolCapabilities="timeline,playback,mirror,playqueues,playqueues-creation"'
         resp += ' machineIdentifier="%s"' % getIdentifier(h)
         resp += ' product="%s"' % getProduct(h)
@@ -169,6 +172,8 @@ class PlexClientRequestHandler(BaseHTTPRequestHandler):
             self._handleResult(MPH.get().skipTo(params))
         elif request_path == "player/playback/refreshPlayQueue":
             self._handleResult(MPH.get().refreshPlayQueue(params))
+        #elif request_path == "player/playback/createPlayQueue":
+        #    self._handleResult(MPH.get().createPlayQueue(params)) TODO: not working
         else:
             logger.warning("unknown request: %s %s" % (request_path, params_org))
             self.response("",code=HTTPStatus.NOT_IMPLEMENTED) # 501 Not Implemented (en-US)            
